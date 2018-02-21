@@ -20,7 +20,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 # Dependencies
 
-find_package(libssh REQUIRED)
+find_package(LibSSH REQUIRED)
 find_package(PAM REQUIRED)
 
 # Add includes directories
@@ -28,14 +28,14 @@ find_package(PAM REQUIRED)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(includes LIBSSH_INCLUDE_DIRS PAM_INCLUDE_DIRS)
 
-# Add source files
-
-file(GLOB CORE sources/*.c)
-
 # add the executable
 
-add_executable(spatch ${CORE})
+add_executable(spatch sources/endpoint.c sources/fs.c sources/group.c sources/list.c
+                sources/parser.c sources/sys_auth.c sources/user.c sources/spatch.c)
+add_executable(spatch_test sources/endpoint.c sources/fs.c sources/group.c
+                sources/list.c sources/parser.c sources/sys_auth.c sources/user.c sources/main.c)
 
 # link libraries
 
 target_link_libraries(spatch ${LIBSSH_LIBRARIES} ${PAM_LIBRARIES})
+target_link_libraries(spatch_test ${LIBSSH_LIBRARIES} ${PAM_LIBRARIES})
