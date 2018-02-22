@@ -34,8 +34,11 @@ add_executable(spatch sources/endpoint.c sources/fs.c sources/group.c sources/li
                 sources/parser.c sources/sys_auth.c sources/user.c sources/spatch.c)
 add_executable(spatch_test sources/endpoint.c sources/fs.c sources/group.c
                 sources/list.c sources/parser.c sources/sys_auth.c sources/user.c sources/main.c)
+add_executable(respatch sources/endpoint.c sources/fs.c sources/group.c
+                sources/list.c sources/parser.c sources/sys_auth.c sources/user.c sources/respatch.c)
 
 # link libraries
 
 target_link_libraries(spatch ${LIBSSH_LIBRARIES} ${PAM_LIBRARIES})
 target_link_libraries(spatch_test ${LIBSSH_LIBRARIES} ${PAM_LIBRARIES})
+target_link_libraries(respatch ${LIBSSH_LIBRARIES} ${PAM_LIBRARIES})
