@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "parse_config.h"
+
 static int is_pass_auth_msg(ssh_message message) {
   return ssh_message_type(message) == SSH_REQUEST_AUTH
     && ssh_message_subtype(message) == SSH_AUTH_METHOD_PASSWORD;
@@ -159,6 +161,7 @@ static void handle_session(ssh_session session) {
 }
 
 int main() {
+  // parse_endpoints("../test/endpoints");
   ssh_bind bind;
   ssh_session session;
   
