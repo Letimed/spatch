@@ -17,6 +17,9 @@ int parseServ()
 	struct serv server3;
 
 	parseFile(1, &server1);
+	parseFile(2, &server2);
+	parseFile(3, &server3);
+
 
 	return 0;
 }
