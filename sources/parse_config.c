@@ -11,7 +11,6 @@ struct loginserv * fillstruct(char* category, char* name, char* password, struct
 {
   if (strcmp(category, "USER") == 0)
   {
-    printf("1 \n");
     // cree spatch
     struct loginserv *mynewloginserv = malloc (sizeof (struct loginserv));
     myloginserv->next = mynewloginserv;
@@ -26,7 +25,6 @@ struct loginserv * fillstruct(char* category, char* name, char* password, struct
   }
   else if (strcmp(category, "SERV1") == 0)
   {
-    printf("2 \n");
     struct login *serv1 = malloc(sizeof(struct login));
     if (strcmp(name, "null") == 0)
     {
@@ -47,7 +45,6 @@ struct loginserv * fillstruct(char* category, char* name, char* password, struct
   }
   else if (strcmp(category, "SERV2") == 0)
   {
-    printf("3 \n");
     struct login *serv2 = malloc(sizeof(struct login));
     if (strcmp(name, "null\n") == 0)
     {
@@ -65,7 +62,6 @@ struct loginserv * fillstruct(char* category, char* name, char* password, struct
   }
    else if (strcmp(category, "SERV3") == 0)
   {
-    printf("4 \n");
     struct login *serv3 = malloc(sizeof(struct login));
     if (strcmp(name, "null") == 0)
     {
