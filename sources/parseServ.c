@@ -44,17 +44,16 @@ int parseFile(int number, struct serv *myServer)
 	if (fichier != NULL)
 	{
 		char line [1024];
+		myServer->listuser = NULL;
      	while ( fgets ( line, sizeof line, fichier ) != NULL ) 
       	{
       	   fputs ( line, stdout );
       	   char delim = '=';
       	   char *name;
-      	   name = malloc(1024 * sizeof(char));
       	   name = strtok(line, &delim);
       	   if (strcmp(name, "HOSTNAME") == 0)
       	   	{
       	   		name = strtok(NULL, &delim);
-      	   		myServer->listuser = NULL;
       	   		myServer->adresse = malloc(sizeof name);
       	   		delim = '\n';
       	   		name = strtok(name, &delim);
@@ -72,7 +71,7 @@ int parseFile(int number, struct serv *myServer)
       	   		{	
       	   			firstuser = myServer->listuser;
       	   			while (myServer->listuser->next != NULL)
-      	   				myServer->listuser->next = myServer->listuser->next;
+      	   				myServer->listuser = myServer->listuser->next;
       	   		}
       	   	   	delim = ':';
        	   		name = strtok(name, &delim);
@@ -81,18 +80,22 @@ int parseFile(int number, struct serv *myServer)
       	   			printf("ERROR\n");
       	   			return ;
       	   		}
-      	   		myServer->listuser = malloc(1024);
+      	   		myServer->listuser = malloc(1024 * sizeof(char));
       	   		myServer->listuser->next = NULL;
       	   		myServer->listuser->user.user = malloc(sizeof(name));
       	   		strcpy(myServer->listuser->user.user, name);
       	   		name = strtok(NULL, &delim);
+      	   		if (name == NULL)
+      	   		{
+      	   			printf("Error parsing file \n");
+      	   			return ;
+      	   		}
       	   		delim='\n';
       	   		name = strtok(name, &delim);
       	   		myServer->listuser->user.password = malloc(sizeof(name));
       	   		strcpy(myServer->listuser->user.password, name);
       	   		if (firstuser != NULL)
       	   			myServer->listuser = firstuser;
-
       	   	}
       	}
 		fclose(fichier);
