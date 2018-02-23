@@ -1,0 +1,5 @@
+/home/syzik/spatch/build/CMakeFiles/edit_cache.dir
+/home/syzik/spatch/build/CMakeFiles/respatch.dir
+/home/syzik/spatch/build/CMakeFiles/spatch.dir
+/home/syzik/spatch/build/CMakeFiles/rebuild_cache.dir
+/home/syzik/spatch/build/CMakeFiles/spatch_test.dir
