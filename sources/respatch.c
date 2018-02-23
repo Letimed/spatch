@@ -5,9 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 #include <time.h>
-
-#include "parse_config.h"
 
 #define PRINT_STATUS_DELAY 15
 
@@ -75,6 +74,109 @@ static void connect_channels(ssh_channel chan1, ssh_channel chan2, int timeout_m
   ssh_channel_write_stderr(chan1, buffer, count);
 }
 
+static void channel_get_line(ssh_channel chan, char *buffer, int bufflen) {
+  bzero(buffer, bufflen);
+  int pos = 0;
+  char c;
+
+  while (1) {
+    if (ssh_channel_read(chan, &c, 1, 0) != 1)
+      break;
+    if (c > 31)
+      buffer[pos] = c;
+    ssh_channel_write(chan, &c, 1);
+    if (c == 127) {
+      ssh_channel_write(chan, "\r", 1);
+      for (int i = 0; i < pos; i++)
+	ssh_channel_write(chan, " ", 1);
+      if (pos > 0) {
+	buffer[pos - 1] = 0;
+	pos--;
+      }
+      ssh_channel_write(chan, "\r", 1);
+      ssh_channel_write(chan, buffer, strlen(buffer));
+    }
+    else if (c == '\r') {
+      ssh_channel_write(chan, "\r\n", 2);
+      return;
+    }
+    else if (pos < bufflen-2)
+      pos++;
+  }
+}
+
+int verify_knownhost(ssh_session session, ssh_channel chan)
+{
+  int state, hlen;
+  unsigned char *hash = NULL;
+  char *hexa;
+  char buf[10];
+  char chanbuf[1024];
+  
+  state = ssh_is_server_known(session);
+  hlen = ssh_get_pubkey_hash(session, &hash);
+  
+  if (hlen < 0)
+    return 0;
+  
+  switch (state)
+    {
+    case SSH_SERVER_KNOWN_OK:
+      break; /* ok */
+    case SSH_SERVER_KNOWN_CHANGED:
+      hexa = ssh_get_hexa(hash, hlen);
+      snprintf(chanbuf, sizeof(chanbuf),
+	       "Host key for server changed: it is now: %s\r\n"
+	       "For security reasons, connection will be stopped\r\n",
+	       hexa);
+      ssh_channel_write_stderr(chan, chanbuf, strlen(chanbuf));
+      free(hash);
+      free(hexa);
+      return 0;
+    case SSH_SERVER_FOUND_OTHER:
+      snprintf(chanbuf, sizeof(chanbuf),
+	       "The host key for this server was not found but an other type of key exists.\r\n"
+	       "An attacker might change the default server key to "
+	       "confuse your client into thinking the key does not exist\r\n");
+      ssh_channel_write_stderr(chan, chanbuf, strlen(chanbuf));
+      free(hash);
+      return 0;
+    case SSH_SERVER_FILE_NOT_FOUND:
+      snprintf(chanbuf, sizeof(chanbuf),
+	       "Could not find known host file.\r\n"
+	       "If you accept the host key here, the file will be automatically created.\r\n");
+      ssh_channel_write_stderr(chan, chanbuf, strlen(chanbuf));
+      /* fallback to SSH_SERVER_NOT_KNOWN behavior */
+      case SSH_SERVER_NOT_KNOWN:
+      hexa = ssh_get_hexa(hash, hlen);
+      snprintf(chanbuf, sizeof(chanbuf),
+	       "The server is unknown. Do you trust the host key?\r\n"
+	       "Public key hash: %s\r\n", hexa);
+      ssh_channel_write_stderr(chan, chanbuf, strlen(chanbuf));
+      free(hexa);
+      channel_get_line(chan, buf, sizeof(buf));
+      if (strncasecmp(buf, "yes", 3) != 0) {
+	free(hash);
+	return 0;
+      }
+      if (ssh_write_knownhost(session) < 0) {
+	snprintf(chanbuf, sizeof(chanbuf),
+		 "Error %s\r\n", strerror(errno));
+	ssh_channel_write_stderr(chan, chanbuf, strlen(chanbuf));
+	free(hash);
+	return 0;
+      }
+      break;
+    case SSH_SERVER_ERROR:
+      snprintf(chanbuf, sizeof(chanbuf), "Error %s", ssh_get_error(session));
+      ssh_channel_write_stderr(chan, chanbuf, strlen(chanbuf));
+      free(hash);
+      return 0;
+    }
+  free(hash);
+  return 1;
+}
+
 static void connect_to_host(ssh_channel client_chan, const char *user,
 			    const char *hostname, int port) {
   const char *error_msg   = NULL;
@@ -89,6 +191,8 @@ static void connect_to_host(ssh_channel client_chan, const char *user,
     error_msg = "failed to connect to host\r\n";
   else if (ssh_userauth_password(session, "florian", "") != SSH_OK)
     error_msg = "authentication failed\r\n";
+  else if (!verify_knownhost(session, client_chan))
+    error_msg = "knownhost verification failed\r\n";
   else if ((server_chan = ssh_channel_new(session)) == NULL)
     error_msg = "failed to create channel\r\n";
   else if (ssh_channel_open_session(server_chan) != SSH_OK)
@@ -135,37 +239,6 @@ static void connect_to_host(ssh_channel client_chan, const char *user,
   printf("%s is disconnected from %s\n", user, hostname);
   ssh_channel_free(server_chan);
   ssh_free(session);
-}
-
-static void channel_get_line(ssh_channel chan, char *buffer, int bufflen) {
-  bzero(buffer, bufflen);
-  int pos = 0;
-  char c;
-
-  while (1) {
-    if (ssh_channel_read(chan, &c, 1, 0) != 1)
-      break;
-    if (c > 31)
-      buffer[pos] = c;
-    ssh_channel_write(chan, &c, 1);
-    if (c == 127) {
-      ssh_channel_write(chan, "\r", 1);
-      for (int i = 0; i < pos; i++)
-	ssh_channel_write(chan, " ", 1);
-      if (pos > 0) {
-	buffer[pos - 1] = 0;
-	pos--;
-      }
-      ssh_channel_write(chan, "\r", 1);
-      ssh_channel_write(chan, buffer, strlen(buffer));
-    }
-    else if (c == '\r') {
-      ssh_channel_write(chan, "\r\n", 2);
-      return;
-    }
-    else if (pos < bufflen-1)
-      pos++;
-  }
 }
 
 static void select_host(ssh_channel chan, const char *user) {
