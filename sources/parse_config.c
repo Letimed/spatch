@@ -83,7 +83,7 @@ struct loginserv * fillstruct(char* category, char* name, char* password, struct
   return (myloginserv);
 }
 
-int main() {
+struct loginserv *parse_config() {
   char buffer[1024];
   FILE *fichier = NULL;
   struct loginserv *myloginserv = malloc (sizeof (struct loginserv));
@@ -133,5 +133,5 @@ int main() {
         }
       else
           printf("cannot open userdatabase.conf\n");
-          return 0;
+      return HEAD->next;
 }
