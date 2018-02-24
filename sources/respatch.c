@@ -8,7 +8,14 @@
 #include <errno.h>
 #include <time.h>
 
+#include "parse.h"
+
 #define PRINT_STATUS_DELAY 15
+
+struct serv server1;
+struct serv server2;
+struct serv server3;
+struct loginserv *logserv;
 
 static int is_pass_auth_msg(ssh_message message) {
   return ssh_message_type(message) == SSH_REQUEST_AUTH
@@ -177,7 +184,8 @@ int verify_knownhost(ssh_session session, ssh_channel chan)
   return 1;
 }
 
-static void connect_to_host(ssh_channel client_chan, const char *user,
+static void connect_to_host(ssh_channel client_chan, const char *usr_spatch,
+			    const char *user, const char *password,
 			    const char *hostname, int port) {
   const char *error_msg   = NULL;
   ssh_session session     = ssh_new();
@@ -186,10 +194,10 @@ static void connect_to_host(ssh_channel client_chan, const char *user,
   ssh_options_set(session, SSH_OPTIONS_HOST, "localhost");
   ssh_options_set(session, SSH_OPTIONS_PORT, &port);
 
-  printf("%s is openning connection to %s:%i\n", user, hostname, port);
+  printf("%s is openning connection to %s@%s:%i\n", usr_spatch, user, hostname, port);
   if (ssh_connect(session) != SSH_OK)
     error_msg = "failed to connect to host\r\n";
-  else if (ssh_userauth_password(session, "florian", "") != SSH_OK)
+  else if (ssh_userauth_password(session, user, password) != SSH_OK)
     error_msg = "authentication failed\r\n";
   else if (!verify_knownhost(session, client_chan))
     error_msg = "knownhost verification failed\r\n";
@@ -228,7 +236,7 @@ static void connect_to_host(ssh_channel client_chan, const char *user,
 
       connect_channels(client_chan, server_chan, 10);
       if (time(NULL) >= print_status_time) {
-	printf("%s is connected to shell on %s\n", user, hostname);
+	printf("%s is connected to shell on %s\n", usr_spatch, hostname);
 	print_status_time = time(NULL) + PRINT_STATUS_DELAY;
       }
 
@@ -241,11 +249,76 @@ static void connect_to_host(ssh_channel client_chan, const char *user,
   ssh_free(session);
 }
 
-static void select_host(ssh_channel chan, const char *user) {
+static int check_allowed_server(struct loginserv *login,
+				 struct serv *server) {
+  const char *user = login->spatch.user;
+  const char *pass = login->spatch.password;
+  struct allowed_user *list = server->listuser;
+
+  while (list != NULL) {
+    if (strcmp(list->user.user, user) == 0
+	&& strcmp(list->user.password, pass) == 0) {
+      return 1;
+    }
+    list = list->next;
+  }
+  return 0;
+}
+
+static int show_allowed_servers(struct loginserv *login,
+				ssh_channel chan) {
+  int c = 0;
+  
+  if (check_allowed_server(login, &server1)) {
+    ssh_channel_write(chan, server1.adresse, strlen(server1.adresse));
+    ssh_channel_write(chan, "\r\n", 2);
+    c++;
+  }
+  if (check_allowed_server(login, &server2)) {
+    ssh_channel_write(chan, server2.adresse, strlen(server2.adresse));
+    ssh_channel_write(chan, "\r\n", 2);
+    c++;
+  }
+  if (check_allowed_server(login, &server3)) {
+    ssh_channel_write(chan, server3.adresse, strlen(server3.adresse));
+    ssh_channel_write(chan, "\r\n", 2);
+    c++;
+  }
+  return c;
+}
+
+static struct serv *match_server(const char *hostname,
+				 struct loginserv *login,
+				 char **user, char **password) {
+  if (strcmp(server1.adresse, hostname) == 0
+      && check_allowed_server(login, &server1)) {
+    *user = login->serv1.user;
+    *password = login->serv1.password;
+    return &server1;
+  }
+  if (strcmp(server2.adresse, hostname) == 0
+      && check_allowed_server(login, &server2)) {
+    *user = login->serv2.user;
+    *password = login->serv2.password;
+    return &server2;
+  }
+  if (strcmp(server3.adresse, hostname) == 0
+      && check_allowed_server(login, &server3)) {
+    *user = login->serv3.user;
+    *password = login->serv3.password;
+    return &server3;
+  }
+  return NULL;
+}
+
+static void select_host(ssh_channel chan, const char *user,
+			struct loginserv *login) {
   const char *welcome_msg = "welcome to spatch\r\n";
   const char *select_msg  = "select an endpoint\r\n";
+  const char *nendp_msg   = "no valid endpoint\r\n";
   char        buffer[1024];
   time_t      print_status_time = time(NULL);
+  struct serv *server = NULL;
 
   ssh_channel_write(chan, welcome_msg, strlen(welcome_msg));
   do {
@@ -255,14 +328,38 @@ static void select_host(ssh_channel chan, const char *user) {
     }
 
     ssh_channel_write(chan, select_msg, strlen(select_msg));
-    channel_get_line(chan, buffer, sizeof(buffer));
-    if (!strcmp(buffer, "localhost")) {
-      connect_to_host(chan, user, "localhost", 4242); // check server
+    if (show_allowed_servers(login, chan) == 0) {
+      ssh_channel_write(chan, nendp_msg, strlen(nendp_msg));
       break;
     }
+    ssh_channel_write(chan, "exit\r\n", strlen("exit\r\n"));
+    
+    channel_get_line(chan, buffer, sizeof(buffer));
+
+    char *svr_usr;
+    char *svr_pass;
+    if ((server = match_server(buffer, login, &svr_usr, &svr_pass)) != NULL) {
+      connect_to_host(chan, user, svr_usr, svr_pass, buffer, server->port);
+	break;
+      }
   } while (strcmp(buffer, "exit") && !is_channel_closed_or_eof(chan));
 
   printf("%s disconnected\n", user);
+}
+
+struct loginserv *match_login(const char *user, const char *pass) {
+  struct loginserv *login = logserv;
+  
+  while (login != NULL) {
+    // printf("login %s %s\n", user, pass);
+    // printf("match %s %s\n", login->spatch.user, login->spatch.password);
+    if (strcmp(user, login->spatch.user) == 0
+	&& strcmp(pass, login->spatch.password) == 0)
+	break;
+    login = login->next;
+  }
+  // printf("login %p\n", login);
+  return login;
 }
 
 static void handle_session(ssh_session session) {
@@ -276,7 +373,10 @@ static void handle_session(ssh_session session) {
   int         auth    = 0;
   int         shell   = 0;
   char        user[64];
+  int         limit   = 3;
+  struct loginserv * login;
 
+  printf("session\n");
   // authenticate user and open channel
   do {
     message = ssh_message_get(session);
@@ -284,11 +384,15 @@ static void handle_session(ssh_session session) {
     //  break;
 
     if (is_pass_auth_msg(message)) {
+      printf("auth\n");
       const char *user_tmp = strdup(ssh_message_auth_user(message));
       const char *pass     = ssh_message_auth_password(message);
       strncpy(user, user_tmp, sizeof(user));
-      // TODO check user/password
-      printf("user %s %s\n", user, pass);
+      login = match_login(user, pass);
+      // printf("user %s %s\n", login->spatch.user, login->spatch.password);
+      // printf("user %s %s\n", user, pass);
+      if (!login && --limit <= 0)
+	break;
       auth = 1;
       ssh_message_auth_reply_success(message, 0);
     }
@@ -319,14 +423,21 @@ static void handle_session(ssh_session session) {
     return;
   }
 
-  select_host(chan, user);
+  select_host(chan, user, login);
 
   ssh_channel_close(chan);
   ssh_channel_free(chan);
 }
 
 int main() {
-  // parse_endpoints("../test/endpoints");
+  logserv = parse_config();
+  if (parseFile(1, &server1) != 0
+      || parseFile(2, &server2) != 0
+      || parseFile(3, &server3) != 0) {
+    fprintf(stderr, "failed to load server config files\n");
+    return 1;
+  }
+
   ssh_bind    bind;
   ssh_session session;
   

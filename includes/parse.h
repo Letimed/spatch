@@ -28,4 +28,7 @@ struct serv
 	struct allowed_user* listuser; 
 };
 
+struct loginserv *parse_config();
+int parseFile(int number, struct serv *myServer);
+
 #endif

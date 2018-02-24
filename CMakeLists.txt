@@ -35,7 +35,7 @@ add_executable(spatch sources/endpoint.c sources/fs.c sources/group.c sources/li
 add_executable(spatch_test sources/endpoint.c sources/fs.c sources/group.c
                 sources/list.c sources/parser.c sources/sys_auth.c sources/user.c sources/main.c)
 add_executable(respatch sources/endpoint.c sources/fs.c sources/group.c
-                sources/list.c sources/parser.c sources/sys_auth.c sources/user.c sources/respatch.c sources/parse_config.c)
+                sources/list.c sources/parser.c sources/sys_auth.c sources/user.c sources/respatch.c sources/parse_config.c sources/parseServ.c)
 
 # link libraries
 
