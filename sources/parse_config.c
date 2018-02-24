@@ -86,7 +86,7 @@ struct loginserv *parse_config() {
   struct loginserv *myloginserv = malloc (sizeof (struct loginserv));
   struct loginserv *HEAD = myloginserv;
 
-      fichier = fopen("../config/userdatabase.conf", "r+");
+      fichier = fopen("/etc/spatch/userdatabase.conf", "r+");
       if (fichier != NULL)
         {
             char name[1024];

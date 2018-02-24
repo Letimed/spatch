@@ -8,11 +8,11 @@ int parseFile(int number, struct serv *myServer)
 	FILE* fichier = NULL;
 
 	if (number == 1)
-	    fichier = fopen("../config/serv1.conf", "r+");
+	    fichier = fopen("/etc/spatch/serv1.conf", "r+");
 	else if (number == 2)
-		fichier = fopen("../config/serv2.conf", "r+");
+		fichier = fopen("/etc/spatch/serv2.conf", "r+");
 	else if (number == 3)
-		fichier = fopen("../config/serv3.conf", "r+");
+		fichier = fopen("/etc/spatch/serv3.conf", "r+");
 	else
 	{
 		printf("Error parsing config files");
