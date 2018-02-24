@@ -25,8 +25,8 @@ find_package(PAM REQUIRED)
 
 # Add includes directories
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(includes LIBSSH_INCLUDE_DIRS PAM_INCLUDE_DIRS)
+#include_directories(${CMAKE_CURRENT_BINARY_DIR})
+#include_directories(includes LIBSSH_INCLUDE_DIRS PAM_INCLUDE_DIRS)
 
 # add the executable
 
