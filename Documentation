@@ -1,0 +1,60 @@
+Présentation
+
+Spatch est un reverse proxy.
+Il permet la connection a différents serveurs par son biais en fonction des droits de l’utilisateur.
+
+
+Installation
+
+Installation du paquet debian :
+sudo dpkg -i spatch.deb
+
+Installation brute a partir du repos :
+	     mkdir build
+	     cd build
+	     cmake ..
+	     make
+
+
+Configuration
+
+Toutes les configurations doivent être créée ou modifiée en tant que root
+Nous possédons 4 fichiers de configuration.
+
+3 fichiers servers (Un fichier conf par serveur)
+	- serv1.conf
+	- serv2.conf
+	- serv3.conf
+
+1 fichier  User :
+	- userdatabase.conf
+
+Les fichiers serveurs :
+	- hostname
+	- port
+	- liste utilisateurs autorisé sur le serveur.
+
+
+Le fichier User :
+	- un couple Login/MotDePass pour spatch
+	- un couple Login/MotDePass pour chaque serveur (s”il existe)
+
+
+
+Usage
+
+Création de la clef rsa pour la connection au proxy spatch :
+ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key
+
+Execution du programme :
+sudo ./spatch
+
+Renseignez vos login / mot de passe
+
+Une liste de serveur auquel vous avez accès apparaît
+
+Choisissez le serveur auquel vous voulez vous connecter.
+
+Vous voilà connecté selon vos droit au serveur désiré
+
+Vous pouvez maintenant échanger avec celui ci
