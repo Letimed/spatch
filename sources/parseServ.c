@@ -3,13 +3,6 @@
 #include <string.h>
 #include "../includes/parse.h"
 
-int main()
-{
-	parseServ();
-    return 0;
-}
-
-
 int parseServ()
 {
 	struct serv server1;
