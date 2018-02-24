@@ -21,12 +21,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 # Dependencies
 
 find_package(LibSSH REQUIRED)
-find_package(PAM REQUIRED)
 
 # Add includes directories
 
-#include_directories(${CMAKE_CURRENT_BINARY_DIR})
-#include_directories(includes LIBSSH_INCLUDE_DIRS PAM_INCLUDE_DIRS)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(includes LIBSSH_INCLUDE_DIRS)
 
 # add the executable
 
@@ -34,4 +33,4 @@ add_executable(spatch sources/respatch.c sources/parse_config.c sources/parseSer
 
 # link libraries
 
-target_link_libraries(spatch ${LIBSSH_LIBRARIES} ${PAM_LIBRARIES})
+target_link_libraries(spatch ${LIBSSH_LIBRARIES})

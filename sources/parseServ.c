@@ -1,54 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../includes/parse.h"
-
-int parseServ()
-{
-	struct serv server1;
-	struct serv server2;
-	struct serv server3;
-
-	if (parseFile(1, &server1) != 0)
-		return;
-	if (parseFile(2, &server2) != 0)
-		return;
-	if (parseFile(3, &server3) != 0)
-		return;
-
-	/*printf("SERVER 1 //// \nHostname : %s \n", server1.adresse);
-	printf("Port : %d \n", server1.port);
-	printf("USER :\n");
-	while (server1.listuser != NULL)
-	{
-		printf("AUser : %s Password : %s \n", server1.listuser->user.user , server1.listuser->user.password);
-		server1.listuser = server1.listuser->next;
-	}
-
-	printf("SERVER 2 //// \nHostname : %s \n", server2.adresse);
-	printf("Port : %d \n", server2.port);
-	printf("USER :\n");
-	while (server2.listuser != NULL)
-	{
-		printf("AUser : %s Password : %s \n", server2.listuser->user.user , server2.listuser->user.password);
-		server2.listuser = server2.listuser->next;
-	}
-
-	printf("SERVER 3 //// \nHostname : %s \n", server3.adresse);
-	printf("Port : %d \n", server3.port);
-	printf("USER :\n");
-	while (server3.listuser != NULL)
-	{
-		printf("AUser : %s Password : %s \n", server3.listuser->user.user , server3.listuser->user.password);
-		server3.listuser = server3.listuser->next;
-	}*/
-
-
-
-
-
-	return 0;
-}
+#include "parse.h"
 
 int parseFile(int number, struct serv *myServer)
 {

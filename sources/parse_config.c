@@ -1,11 +1,8 @@
-#include <dirent.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../includes/parse.h"
+#include "parse.h"
 
 struct loginserv * fillstruct(char* category, char* name, char* password, struct loginserv *myloginserv)
 {
