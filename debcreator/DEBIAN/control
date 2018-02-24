@@ -1,9 +1,0 @@
-Package: spatch
-Version: 1.0
-Section: base
-Priority: optional
-Architecture: all
-Depends: bash
-Maintainer: camus_f <florian.camus@gmail.com>
-Description: Proxy spatch.
-Homepage: http://github.com/letimed
